@@ -92,11 +92,15 @@ def bag42(environ, start_response):
 			lat = float(lat)
 			lon = float(lon)
 
+			lat = math.radians(lat)
+			lon = math.radians(lon)
+
+			tileindex = "%dx%d" % (int(lon * 1000), int(lat * 1000))
+
 			db = MySQLdb.connect(host="127.0.0.1", port=9306)
 			c = db.cursor()
-			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag ORDER BY distance ASC LIMIT 1;""", (math.radians(lat), math.radians(lon)))
+			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag WHERE match(%s) ORDER BY distance ASC LIMIT 1;""", (lat, lon, tileindex))
 			rows = fetchall(c, c.fetchall())
-			print rows
 			c.close()
 
 			return google_reply(rows)
