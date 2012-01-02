@@ -59,7 +59,16 @@ def google_json(straat, huisnummer, huisletter, huisnummertoevoeging, postcode, 
 			'types': [ "postcode_code" ],
 		},
 		],
-		'geometry': { 'location': { 'lat': lat, 'lng': lon }, 'location_type': 'GEOMETRIC_CENTER' }
+		'geometry':
+		{
+			'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
+			'location_type': 'GEOMETRIC_CENTER',
+			'viewport':
+			{
+				'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
+				'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
+			},
+		}
 		}
 
 def google_reply(rows):
