@@ -59,7 +59,7 @@ def google_json(straat, huisnummer, huisletter, huisnummertoevoeging, postcode, 
 			'types': [ "postcode_code" ],
 		},
 		],
-		'geometry': { 'location': { 'lat': lat, 'lon': lon }, 'location_type': 'GEOMETRIC_CENTER' }
+		'geometry': { 'location': { 'lat': lat, 'lng': lon }, 'location_type': 'GEOMETRIC_CENTER' }
 		}
 
 def google_reply(rows):
