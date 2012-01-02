@@ -7,9 +7,8 @@ from webob import Request
 def fetchall(c, result):
         if len(result) == 0:
                 return None
-        elif len(result) > 0 and len(result[0]) == 1:
+        elif len(result) > 0:
                 ids = ','.join([str(x[0]) for x in result])
-                #print ids
                 # The following line will not allow injection, it consist only of ids
                 c.execute("""select * from bag where id IN (%s)"""%(ids))
                 tmp = c.fetchall()
@@ -25,6 +24,60 @@ def fetchall(c, result):
         else:
                 return result
 
+def google_json(straat, huisnummer, huisletter, huisnummertoevoeging, postcode, gemeente, provincie, buurt, wijk, lat, lon):
+	return {'types': [ "streetaddress" ],
+		'formatted_address': "%s %s%s%s\n%s  %s" % (straat, huisnummer, huisletter, huisnummertoevoeging, postcode, gemeente),
+		'address_components': [
+		{
+			'long_name': huisnummer,
+			'short_name': huisnummer,
+			'types': [ "street_number" ],
+		},
+		{
+			'long_name': straat,
+			'short_name': straat,
+			'types': [ "route" ],
+		},
+		{
+			'long_name': gemeente,
+			'short_name': gemeente,
+			'types': [ "locality", "political" ],
+		},
+		{
+			'long_name': provincie,
+			'short_name': provincie,
+			'types': [ "administrative_area_level_1", "political" ],
+		},
+		{
+			'long_name': 'Nederland',
+			'short_name': 'NL',
+			'types': [ "country", "political" ],
+		},
+		{
+			'long_name': postcode,
+			'short_name': postcode,
+			'types': [ "postcode_code" ],
+		},
+		],
+		'geometry': { 'location': { 'lat': lat, 'lon': lon }, 'location_type': 'GEOMETRIC_CENTER' }
+		}
+
+def google_reply(rows):
+	if rows is None:
+		yield simplejson.dumps({'status': "INVALID_REQUEST"})
+
+	elif len(rows) == 0:
+		yield simplejson.dumps({'status': "ZERO_RESULTS"})
+
+	else:
+		reply = {'status': 'OK'}
+		results = []
+		for row in rows:
+			results.append(google_json(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], math.degrees(row[11]), math.degrees(row[10])))
+
+		yield simplejson.dumps({'status': "OK", 'results': results})
+
+	return	
 
 def bag42(environ, start_response):
 	start_response('200 OK', [('Content-Type', 'application/json'), ('Access-Control-Allow-Origin', '*')])
@@ -38,67 +91,30 @@ def bag42(environ, start_response):
 			lat, lon = request.params["latlng"].split(',')
 			lat = float(lat)
 			lon = float(lon)
+
+			db = MySQLdb.connect(host="127.0.0.1", port=9306)
+			c = db.cursor()
+			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag ORDER BY distance ASC LIMIT 1;""", (math.radians(lat), math.radians(lon)))
+			rows = fetchall(c, c.fetchall())
+			print rows
+			c.close()
+
+			return google_reply(rows)
+
 		except:
-			yield simplejson.dumps({'status': "INVALID_REQUEST"})
-			return
+			return googlereply(None)
 
 	elif 'address' in request.params:
 		address = request.params["address"]
 		db = MySQLdb.connect(host="127.0.0.1", port=9306)
 		c = db.cursor()
-		c.execute("""select * from bag, bag_metaphone where match(%s) limit 10 option index_weights=(bag=100, bag_metaphone=10);""", (address,))
+		c.execute("""SELECT * FROM bag, bag_metaphone WHERE match(%s) LIMIT 10 OPTION index_weights=(bag=100, bag_metaphone=10);""", (address,))
 		rows = fetchall(c, c.fetchall())
 		c.close()
 
-		if len(rows) == 0:
-			yield simplejson.dumps({'status': "ZERO_RESULTS"})
-			return
-		else:
-			reply = {'status': 'OK'}
-			results = []
-			for row in rows:
-				results.append({'types': [ "streetaddress" ],
-				                'formatted_address': "%s %s%s%s\n%s  %s" % (row[1], row[2], row[3], row[4], row[5], row[6]),
-						'address_components': [
-						{
-							'long_name': row[2],
-							'short_name': row[2],
-							'types': [ "street_number" ],
-						},
-						{
-							'long_name': row[1],
-							'short_name': row[1],
-							'types': [ "route" ],
-						},
-						{
-							'long_name': row[6],
-							'short_name': row[6],
-							'types': [ "locality", "political" ],
-						},
-						{
-							'long_name': row[7],
-							'short_name': row[7],
-							'types': [ "administrative_area_level_1", "political" ],
-						},
-						{
-							'long_name': 'Nederland',
-							'short_name': 'NL',
-							'types': [ "country", "political" ],
-						},
-						{
-							'long_name': row[5],
-							'short_name': row[5],
-							'types': [ "postcode_code" ],
-						},
-						],
-						'geometry': { 'location': { 'lat': math.degrees(row[11]), 'lon': math.degrees(row[10]) }, 'location_type': 'GEOMETRIC_CENTER' }
-						})
-
-			yield simplejson.dumps({'status': "OK", 'results': results})
-			return	
+		return google_reply(rows)
 
 	else:
-		yield simplejson.dumps({'status': "INVALID_REQUEST"})
-		return
+		return google_reply(None)
 
 uwsgi.applications = {'':bag42}
