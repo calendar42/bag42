@@ -44,6 +44,16 @@ def google_json(straat, huisnummer, huisletter, huisnummertoevoeging, postcode, 
 			'types': [ "locality", "political" ],
 		},
 		{
+			'long_name': wijk,
+			'short_name': wijk,
+			'types': [ "sublocality" ],
+		},
+		{
+			'long_name': buurt,
+			'short_name': buurt,
+			'types': [ "neighborhood" ],
+		},
+		{
 			'long_name': provincie,
 			'short_name': provincie,
 			'types': [ "administrative_area_level_1", "political" ],
