@@ -98,14 +98,17 @@ def tileindex(lat, lon):
 	difflat -= tileslat[0]
 	difflon -= tileslon[0]
 
-	if int(difflat * 10) > 5:
+	difflat = int(difflat) * 10
+	difflon = int(difflon) * 10
+
+	if difflat > 5:
 		tileslat.append(tileslat[0] + 1)
-	elif int(difflat * 10) < 5:
+	elif difflat < 5:
 		tileslat.append(tileslat[0] - 1)
 
-	if int(difflon * 10) > 5:
+	if difflon > 5:
 		tileslon.append(tileslon[0] + 1)
-	elif int(difflon * 10) < 5:
+	elif difflon < 5:
 		tileslat.append(tileslon[0] - 1)
 
 	return ' '.join(["%dx%d" % (x, y) for x in tileslon for y in tileslat])
