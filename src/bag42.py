@@ -5,8 +5,10 @@ import simplejson
 from webob import Request
 
 def fetchall(c, result):
-        if len(result) == 0:
-                return None
+	if result is None:
+		return result
+        elif len(result) == 0:
+                return 0
         elif len(result) > 0:
                 ids = ','.join([str(x[0]) for x in result])
                 # The following line will not allow injection, it consist only of ids
@@ -21,8 +23,6 @@ def fetchall(c, result):
                         tmp3.append(tmp2[x[0]])
 
                 return tmp3
-        else:
-                return result
 
 def google_json(straat, huisnummer, huisletter, huisnummertoevoeging, postcode, gemeente, provincie, buurt, wijk, lat, lon):
 	return {'types': [ "streetaddress" ],
@@ -75,7 +75,7 @@ def google_reply(rows):
 	if rows is None:
 		yield simplejson.dumps({'status': "INVALID_REQUEST"})
 
-	elif len(rows) == 0:
+	elif rows == 0:
 		yield simplejson.dumps({'status': "ZERO_RESULTS"})
 
 	else:
@@ -86,7 +86,30 @@ def google_reply(rows):
 
 		yield simplejson.dumps({'status': "OK", 'results': results})
 
-	return	
+	return
+
+def tileindex(lat, lon):
+	difflat = lat * 1000
+	difflon = lon * 1000
+
+	tileslat = [int(difflat)]
+	tileslon = [int(diflon)]
+
+	difflat -= tileslat[0]
+	difflon -= tileslon[0]
+
+	if int(difflat * 10) > 5:
+		tileslat.append(tileslat[0] + 1)
+	elif int(difflat * 10) < 5:
+		tileslat.append(tileslat[0] - 1)
+
+	if int(difflon * 10) > 5:
+		tileslon.append(tileslon[0] + 1)
+	elif int(difflon * 10) < 5:
+		tileslat.append(tileslon[0] - 1)
+
+	return ' '.join(["%dx%d" % (x, y) for x in tileslon for y in tileslat])
+
 
 def bag42(environ, start_response):
 	start_response('200 OK', [('Content-Type', 'application/json'), ('Access-Control-Allow-Origin', '*')])
@@ -104,18 +127,18 @@ def bag42(environ, start_response):
 			lat = math.radians(lat)
 			lon = math.radians(lon)
 
-			tileindex = "%dx%d" % (int(lon * 1000), int(lat * 1000))
+			geoindex = tileindex(lat, lon)
 
 			db = MySQLdb.connect(host="127.0.0.1", port=9306)
 			c = db.cursor()
-			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag WHERE match(%s) ORDER BY distance ASC LIMIT 1;""", (lat, lon, tileindex))
+			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag WHERE match(%s) ORDER BY distance ASC LIMIT 1;""", (lat, lon, geoindex))
 			rows = fetchall(c, c.fetchall())
 			c.close()
 
 			return google_reply(rows)
 
 		except:
-			return googlereply(None)
+			return google_reply(None)
 
 	elif 'address' in request.params:
 		address = request.params["address"]
