@@ -4,6 +4,36 @@ import uwsgi
 import simplejson
 from webob import Request
 
+
+# http://www.onzetaal.nl/taaladvies/advies/afkortingen-van-provincienamen
+provincies_nl_kort = {
+'Drenthe': 'DR',
+'Flevoland': 'FL',
+'Friesland': 'FR',
+'Gelderland': 'GD',
+'Groningen': 'GR',
+'Limburg': 'LB',
+'Noord-Brabant': 'NB',
+'Noord-Holland': 'NH',
+'Overijssel': 'OV',
+'Utrecht': 'UT',
+'Zuid-Holland': 'ZH',
+'Zeeland': 'ZL',
+}
+
+provincies_be_kort = {
+'Antwerpen': 'ANT',
+'Henegouwen': 'HAI',
+'Luik': 'LIE',
+'Limburg': 'LIM',
+'Luxemburg': 'LUX',
+'Namen': 'NAM',
+'Oost-Vlaanderen': 'OVL',
+'Vlaams-Brabant': 'VBR',
+'Waals-Brabant': 'WBR',
+'West-Vlaanderen': 'WVL',
+}
+
 def fetchall(c, result):
 	if result is None:
 		return result
@@ -20,66 +50,139 @@ def fetchall(c, result):
                         tmp2[x[0]] = x
 
                 for x in result:
-                        tmp3.append(tmp2[x[0]])
+			if x[0] in tmp2:
+	                        tmp3.append(tmp2[x[0]])
 
                 return tmp3
 
-def google_json(straat, huisnummer, huisletter, huisnummertoevoeging, postcode, gemeente, provincie, buurt, wijk, lat, lon):
-	return {'types': [ "streetaddress" ],
-		'formatted_address': "%s %s%s%s\n%s  %s" % (straat, huisnummer, huisletter, huisnummertoevoeging, postcode, gemeente),
-		'address_components': [
-		{
-			'long_name': huisnummer,
-			'short_name': huisnummer,
-			'types': [ "street_number" ],
-		},
-		{
-			'long_name': straat,
-			'short_name': straat,
-			'types': [ "route" ],
-		},
-		{
-			'long_name': gemeente,
-			'short_name': gemeente,
-			'types': [ "locality", "political" ],
-		},
-		{
-			'long_name': wijk,
-			'short_name': wijk,
-			'types': [ "sublocality" ],
-		},
-		{
-			'long_name': buurt,
-			'short_name': buurt,
-			'types': [ "neighborhood" ],
-		},
-		{
-			'long_name': provincie,
-			'short_name': provincie,
-			'types': [ "administrative_area_level_1", "political" ],
-		},
-		{
-			'long_name': 'Nederland',
-			'short_name': 'NL',
-			'types': [ "country", "political" ],
-		},
-		{
-			'long_name': postcode,
-			'short_name': postcode,
-			'types': [ "postcode_code" ],
-		},
-		],
-		'geometry':
-		{
-			'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
-			'location_type': 'GEOMETRIC_CENTER',
-			'viewport':
+def google_json(straat, huisnummer, huisletter, huisnummertoevoeging, postcode, woonplaats, gemeente, provincie, buurt, wijk, lat, lon):
+	if straat != '':
+		return {'types': [ "streetaddress" ],
+			'formatted_address': "%s %s%s%s\n%s  %s" % (straat, huisnummer, huisletter, huisnummertoevoeging, postcode, woonplaats),
+			'address_components': [
 			{
-				'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
-				'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
+				'long_name': huisnummer,
+				'short_name': huisnummer,
+				'types': [ "street_number" ],
 			},
-		}
-		}
+			{
+				'long_name': straat,
+				'short_name': straat,
+				'types': [ "route" ],
+			},
+			{
+				'long_name': woonplaats,
+				'short_name': woonplaats,
+				'types': [ "locality" ],
+			},
+			{
+				'long_name': gemeente,
+				'short_name': gemeente,
+				'types': [ "administrative_area_level_2", "political" ],
+			},
+			{
+				'long_name': wijk,
+				'short_name': wijk,
+				'types': [ "sublocality" ],
+			},
+			{
+				'long_name': buurt,
+				'short_name': buurt,
+				'types': [ "neighborhood" ],
+			},
+			{
+				'long_name': provincie,
+				'short_name': provincies_nl_kort[provincie],
+				'types': [ "administrative_area_level_1", "political" ],
+			},
+			{
+				'long_name': 'Nederland',
+				'short_name': 'NL',
+				'types': [ "country", "political" ],
+			},
+			{
+				'long_name': postcode,
+				'short_name': postcode,
+				'types': [ "postcode_code" ],
+			},
+			],
+			'geometry':
+			{
+				'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
+				'location_type': 'GEOMETRIC_CENTER',
+				'viewport':
+				{
+					'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
+					'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
+				},
+			}
+			}
+
+	elif woonplaats != '':
+		return {'types': [ "locality" ],
+			'address_components': [
+			{
+				'long_name': woonplaats,
+				'short_name': woonplaats,
+				'types': [ "locality" ],
+			},
+			{
+				'long_name': gemeente,
+				'short_name': gemeente,
+				'types': [ "administrative_area_level_2", "political" ],
+			},
+			{
+				'long_name': provincie,
+				'short_name': provincies_nl_kort[provincie],
+				'types': [ "administrative_area_level_1", "political" ],
+			},
+			{
+				'long_name': 'Nederland',
+				'short_name': 'NL',
+				'types': [ "country", "political" ],
+			},
+			],
+			'geometry':
+			{
+				'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
+				'location_type': 'GEOMETRIC_CENTER',
+				'viewport':
+				{
+					'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
+					'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
+				},
+			}
+			}
+
+	elif provincie != '':
+		return {'types': [ "administrative_area_level_1" ],
+			'address_components': [
+			{
+				'long_name': provincie,
+				'short_name': provincies_nl_kort[provincie],
+				'types': [ "administrative_area_level_1", "political" ],
+			},
+			{
+				'long_name': 'Nederland',
+				'short_name': 'NL',
+				'types': [ "country", "political" ],
+			},
+			],
+			'geometry':
+			{
+				'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
+				'location_type': 'GEOMETRIC_CENTER',
+				'viewport':
+				{
+					'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
+					'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
+				},
+			}
+			}
+
+	else:
+		return None
+
 
 def google_reply(rows):
 	if rows is None:
@@ -92,7 +195,7 @@ def google_reply(rows):
 		reply = {'status': 'OK'}
 		results = []
 		for row in rows:
-			results.append(google_json(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], math.degrees(row[11]), math.degrees(row[10])))
+			results.append(google_json(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], math.degrees(row[12]), math.degrees(row[11])))
 
 		yield simplejson.dumps({'status': "OK", 'results': results})
 
@@ -103,7 +206,7 @@ def tileindex(lat, lon):
 	difflon = lon * 1000
 
 	tileslat = [int(difflat)]
-	tileslon = [int(diflon)]
+	tileslon = [int(difflon)]
 
 	difflat -= tileslat[0]
 	difflon -= tileslon[0]
@@ -119,9 +222,9 @@ def tileindex(lat, lon):
 	if difflon > 5:
 		tileslon.append(tileslon[0] + 1)
 	elif difflon < 5:
-		tileslat.append(tileslon[0] - 1)
+		tileslon.append(tileslon[0] - 1)
 
-	return ' '.join(["%dx%d" % (x, y) for x in tileslon for y in tileslat])
+	return ' '.join(["%dx%d" % (x,y) for x in tileslon for y in tileslat])
 
 
 def bag42(environ, start_response):
@@ -140,24 +243,32 @@ def bag42(environ, start_response):
 			lat = math.radians(lat)
 			lon = math.radians(lon)
 
-			geoindex = tileindex(lat, lon)
+			geoindex = '"%s"/1' % (tileindex(lat, lon))
 
 			db = MySQLdb.connect(host="127.0.0.1", port=9306)
 			c = db.cursor()
-			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag WHERE match(%s) ORDER BY distance ASC LIMIT 1;""", (lat, lon, geoindex))
+			#c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag ORDER BY distance ASC LIMIT 1;""", (lat, lon))
+			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag WHERE match(%s) ORDER BY distance ASC LIMIT 1 OPTION ranker=matchany;""", (lat, lon, geoindex))
 			rows = fetchall(c, c.fetchall())
+
 			c.close()
 
 			return google_reply(rows)
 
 		except:
+			raise
 			return google_reply(None)
 
 	elif 'address' in request.params:
-		address = request.params["address"]
+		try:
+			maxitems = int(request.params['maxitems'])
+		except:
+			maxitems = 10
+				
+		address = request.params["address"].replace('+', ' ')+'*'
 		db = MySQLdb.connect(host="127.0.0.1", port=9306)
 		c = db.cursor()
-		c.execute("""SELECT * FROM bag, bag_metaphone WHERE match(%s) LIMIT 10 OPTION index_weights=(bag=100, bag_metaphone=10);""", (address,))
+		c.execute("""SELECT * FROM bag, bag_metaphone, bag_woonplaats, bag_provincie, tudelft WHERE match(%s) LIMIT %s OPTION index_weights=(bag=1000, bag_metaphone=1, bag_woonplaats=1850, bag_provincie=1600, tudelft=10), ranker=sph04, field_weights=(straat=5,huisnummer=3,huisletter=2,huisnummertoevoeging=1,postcode=15,woonplaats=15,gemeente=4,provincie=4,buurt=3,wijk=3);""", (address,maxitems))
 		rows = fetchall(c, c.fetchall())
 		c.close()
 
