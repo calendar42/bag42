@@ -202,8 +202,8 @@ def google_reply(rows):
 	return
 
 def tileindex(lat, lon):
-	difflat = lat * 1000
-	difflon = lon * 1000
+	difflat = round(lat * 1000)
+	difflon = round(lon * 1000)
 
 	tileslat = [int(difflat)]
 	tileslon = [int(difflon)]
@@ -224,7 +224,7 @@ def tileindex(lat, lon):
 	elif difflon < 5:
 		tileslon.append(tileslon[0] - 1)
 
-	return ' '.join(["%dx%d" % (x,y) for x in tileslon for y in tileslat])
+	return '"'+' '.join(["%dx%d" % (x,y) for x in tileslon for y in tileslat])+'"/1'
 
 
 def bag42(environ, start_response):
@@ -243,13 +243,25 @@ def bag42(environ, start_response):
 			lat = math.radians(lat)
 			lon = math.radians(lon)
 
-			geoindex = '"%s"/1' % (tileindex(lat, lon))
+
+			geoindex = tileindex(lat, lon)
+
+			print lat, lon, geoindex
 
 			db = MySQLdb.connect(host="127.0.0.1", port=9306)
 			c = db.cursor()
-			#c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag ORDER BY distance ASC LIMIT 1;""", (lat, lon))
-			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag WHERE match(%s) ORDER BY distance ASC LIMIT 1 OPTION ranker=matchany;""", (lat, lon, geoindex))
-			rows = fetchall(c, c.fetchall())
+			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag WHERE match(%s) ORDER BY distance ASC LIMIT 100""", (lat, lon, geoindex))
+			rows = c.fetchall()
+			if rows is not None:
+				rows_final = [rows[0]]
+				i = 1
+				for row in rows[1:]:
+					if rows[0][1] == row[1]:
+						rows_final.append(row)
+					else:
+						break
+
+				rows = fetchall(c, rows_final)
 
 			c.close()
 
@@ -265,7 +277,7 @@ def bag42(environ, start_response):
 		except:
 			maxitems = 10
 				
-		address = request.params["address"].replace('+', ' ')+'*'
+		address = request.params["address"].replace('+', ' ')
 		db = MySQLdb.connect(host="127.0.0.1", port=9306)
 		c = db.cursor()
 		c.execute("""SELECT * FROM bag, bag_metaphone, bag_woonplaats, bag_provincie, tudelft WHERE match(%s) LIMIT %s OPTION index_weights=(bag=1000, bag_metaphone=1, bag_woonplaats=1850, bag_provincie=1600, tudelft=10), ranker=sph04, field_weights=(straat=5,huisnummer=3,huisletter=2,huisnummertoevoeging=1,postcode=15,woonplaats=15,gemeente=4,provincie=4,buurt=3,wijk=3);""", (address,maxitems))
