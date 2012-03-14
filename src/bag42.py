@@ -55,129 +55,121 @@ def fetchall(c, result):
 
                 return tmp3
 
-def google_json(straat, huisnummer, huisletter, huisnummertoevoeging, postcode, woonplaats, gemeente, provincie, buurt, wijk, lat, lon):
-	if straat != '':
-		return {'types': [ "streetaddress" ],
-			'formatted_address': "%s %s%s%s\n%s  %s" % (straat, huisnummer, huisletter, huisnummertoevoeging, postcode, woonplaats),
-			'address_components': [
+def address_components_json(straat, postcode, woonplaats, gemeente, provincie, huisnummer, huisletter, huisnummertoevoeging, buurt, wijk):
+	address_components = [
 			{
-				'long_name': huisnummer,
-				'short_name': huisnummer,
+				'long_name': 'Nederland',
+				'short_name': 'NL',
+				'types': [ "country", "political" ],
+			}]
+
+	if huisnummer != '':
+		address_components.append(
+			{
+				'long_name': huisnummer+huisnummertoevoeging,
+				'short_name': huisnummer+huisnummertoevoeging,
 				'types': [ "street_number" ],
-			},
+			})	
+
+	if straat != '':
+		address_components.append(
 			{
 				'long_name': straat,
 				'short_name': straat,
 				'types': [ "route" ],
-			},
-			{
-				'long_name': woonplaats,
-				'short_name': woonplaats,
-				'types': [ "locality" ],
-			},
-			{
-				'long_name': gemeente,
-				'short_name': gemeente,
-				'types': [ "administrative_area_level_2", "political" ],
-			},
-			{
-				'long_name': wijk,
-				'short_name': wijk,
-				'types': [ "sublocality" ],
-			},
-			{
-				'long_name': buurt,
-				'short_name': buurt,
-				'types': [ "neighborhood" ],
-			},
-			{
-				'long_name': provincie,
-				'short_name': provincies_nl_kort[provincie],
-				'types': [ "administrative_area_level_1", "political" ],
-			},
-			{
-				'long_name': 'Nederland',
-				'short_name': 'NL',
-				'types': [ "country", "political" ],
-			},
+			})
+	
+	if postcode != '':
+		address_components.append(
 			{
 				'long_name': postcode,
 				'short_name': postcode,
 				'types': [ "postcode_code" ],
-			},
-			],
-			'geometry':
-			{
-				'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
-				'location_type': 'GEOMETRIC_CENTER',
-				'viewport':
-				{
-					'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
-					'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
-				},
-			}
-			}
+			})
 
-	elif woonplaats != '':
-		return {'types': [ "locality" ],
-			'address_components': [
+	if woonplaats != '':
+
+		address_components.append(
 			{
 				'long_name': woonplaats,
 				'short_name': woonplaats,
 				'types': [ "locality" ],
-			},
+			})
+
+	if gemeente != '':
+		address_components.append(
 			{
 				'long_name': gemeente,
 				'short_name': gemeente,
 				'types': [ "administrative_area_level_2", "political" ],
-			},
+			})
+
+	if wijk != '':
+		address_components.append(
+			{
+				'long_name': wijk,
+				'short_name': wijk,
+				'types': [ "sublocality" ],
+			})
+
+	if buurt != '':
+		address_components.append(
+			{
+				'long_name': buurt,
+				'short_name': buurt,
+				'types': [ "neighborhood" ],
+			})
+
+	if provincie != '':
+		address_components.append(
 			{
 				'long_name': provincie,
 				'short_name': provincies_nl_kort[provincie],
 				'types': [ "administrative_area_level_1", "political" ],
-			},
+			})
+
+	return address_components
+
+def geometry_components_json(lat, lon):
+	return {
+			'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
+			'location_type': 'GEOMETRIC_CENTER',
+			'viewport':
 			{
-				'long_name': 'Nederland',
-				'short_name': 'NL',
-				'types': [ "country", "political" ],
+				'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
+				'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
 			},
-			],
-			'geometry':
-			{
-				'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
-				'location_type': 'GEOMETRIC_CENTER',
-				'viewport':
-				{
-					'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
-					'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
-				},
+		}
+
+
+def google_json(straat, postcode, woonplaats, gemeente, provincie, huisnummer, huisletter, huisnummertoevoeging, buurt, wijk, lat, lon, bedrijfsnaam):
+	if bedrijfsnaam != '':
+		return {'types': ["streetaddress", "companyname"],
+		        'formatted_address': "%s\n%s %s%s%s\n%s  %s" % (bedrijfsnaam, straat, huisnummer, huisnummertoevoeging, huisletter, postcode, woonplaats),
+			'address_components': address_components_json(straat, postcode, woonplaats, gemeente, provincie, huisnummer, huisletter, huisnummertoevoeging, buurt, wijk),
+			'companny_components': [ {'long_name': bedrijfsnaam, 'types': [ "registered_name" ] } ],
+			'geometry': geometry_components_json(lat, lon)
 			}
+
+	if straat != '':
+		return {'types': [ "streetaddress" ],
+			'formatted_address': "%s %s%s%s\n%s  %s" % (straat, huisnummer, huisnummertoevoeging, huisletter, postcode, woonplaats),
+			'address_components': address_components_json(straat, postcode, woonplaats, gemeente, provincie, huisnummer, huisletter, huisnummertoevoeging, buurt, wijk),
+			'geometry': geometry_components_json(lat, lon)
+			}
+
+	elif woonplaats != '':
+		return {'types': [ "locality" ],
+		        'formatted_address': "%s" % (woonplaats),
+			'address_components': address_components_json(straat, postcode, woonplaats, gemeente, provincie, huisnummer, huisletter, huisnummertoevoeging, buurt, wijk),
+			'geometry': geometry_components_json(lat, lon)
 			}
 
 	elif provincie != '':
 		return {'types': [ "administrative_area_level_1" ],
-			'address_components': [
-			{
-				'long_name': provincie,
-				'short_name': provincies_nl_kort[provincie],
-				'types': [ "administrative_area_level_1", "political" ],
-			},
-			{
-				'long_name': 'Nederland',
-				'short_name': 'NL',
-				'types': [ "country", "political" ],
-			},
-			],
-			'geometry':
-			{
-				'location': { 'lat': "%.8f" % lat, 'lng': "%.8f" % lon },
-				'location_type': 'GEOMETRIC_CENTER',
-				'viewport':
-				{
-					'southwest': { 'lat': "%.6f" % (lat - 0.003), 'lng': "%.6f" % (lon - 0.003) },
-					'northeast': { 'lat': "%.6f" % (lat + 0.003), 'lng': "%.6f" % (lon + 0.003) },
-				},
-			}
+		        'formatted_address': "%s" % (provincie),
+			'address_components': address_components_json(straat, postcode, woonplaats, gemeente, provincie, huisnummer, huisletter, huisnummertoevoeging, buurt, wijk),
+			'geometry': geometry_components_json(lat, lon)
 			}
 
 	else:
@@ -195,7 +187,7 @@ def google_reply(rows):
 		reply = {'status': 'OK'}
 		results = []
 		for row in rows:
-			results.append(google_json(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], math.degrees(row[12]), math.degrees(row[11])))
+			results.append(google_json(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], math.degrees(row[12]), math.degrees(row[11]), row[13]))
 
 		yield simplejson.dumps({'status': "OK", 'results': results})
 
@@ -252,7 +244,7 @@ def bag42(environ, start_response):
 			c = db.cursor()
 			c.execute("""SELECT id, geodist(%s, %s, lat_radians, lon_radians) AS distance FROM bag WHERE match(%s) ORDER BY distance ASC LIMIT 100""", (lat, lon, geoindex))
 			rows = c.fetchall()
-			if rows is not None:
+			if rows is not None and len(rows) > 0:
 				rows_final = [rows[0]]
 				i = 1
 				for row in rows[1:]:
@@ -280,7 +272,7 @@ def bag42(environ, start_response):
 		address = request.params["address"].replace('+', ' ')
 		db = MySQLdb.connect(host="127.0.0.1", port=9306)
 		c = db.cursor()
-		c.execute("""SELECT * FROM bag, bag_metaphone, bag_woonplaats, bag_provincie, tudelft WHERE match(%s) LIMIT %s OPTION index_weights=(bag=1000, bag_metaphone=1, bag_woonplaats=1850, bag_provincie=1600, tudelft=10), ranker=sph04, field_weights=(straat=5,huisnummer=3,huisletter=2,huisnummertoevoeging=1,postcode=15,woonplaats=15,gemeente=4,provincie=4,buurt=3,wijk=3);""", (address,maxitems))
+		c.execute("""SELECT * FROM bag, bag_postcode, bag_straat, bag_straat_metaphone, bag_metaphone, bag_woonplaats, bag_provincie, tudelft, kvk_bag WHERE match(%s) LIMIT %s OPTION index_weights=(bag=10,bag_metaphone=1,bag_woonplaats=20,bag_provincie=25,tudelft=5,kvk_bag=25,bag_straat_metaphone=3,bag_postcode=15,bag_straat=16), ranker=sph04, field_weights=(straat=5,huisnummer=3,huisletter=2,huisnummertoevoeging=1,postcode=15,woonplaats=15,gemeente=4,provincie=4,buurt=3,wijk=3);""", (address,maxitems))
 		rows = fetchall(c, c.fetchall())
 		c.close()
 
