@@ -1,1 +1,2 @@
-Test
+We love Google! Serving the web, and our geocoders, for quite some years. Especially their generic geocoding results fit the bill. However, for the more detailed requests, it might be better to integrate high quality, official data sources. We can think about building and address registration straight from the Dutch Land Registry Office or address information of local business directly connected to the chamber of commerce.
+
