@@ -5,7 +5,7 @@
 var app = {};
 
 /** Geocode service server address */
-app.geocode_serverpath = 'http://bag.plannerstack.org/api/v0/geocode/json';
+app.geocode_serverpath = 'http://bag.plannerstack.com/api/v0/geocode/json';
 
 /** Request a list of possible locations based on the given address. (deferred) */
 app.geoCode = function geoCode(address)
