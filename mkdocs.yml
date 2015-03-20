@@ -1,8 +1,9 @@
 site_name: Bag42 geocoder
 site_favicon: favicon.ico
 
-pages:
-- ['README.md', 'Introduction']
+# FIXME: Somehow these pages result in a succesfull build, but a 404, couldn't understand why
+#pages:
+#- ['README.md', 'Introduction']
 #- ['examples/autocomplete.md', 'Examples', 'Autocomplete']
 #- ['examples/geocoding.md', 'Examples', 'Geocoding']
 #- ['examples/geocoding.md', 'Examples', 'Results']
