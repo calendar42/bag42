@@ -1,0 +1,7 @@
+site_name: Bag42 geocoder
+site_favicon: favicon.ico
+
+pages:
+- ['README.md', 'Introduction']
+- ['user-guide.md', 'User Guide']
+- ['about.md', 'About']
