@@ -1,3 +1,5 @@
+# Company search
+
 ```
 {
     "results": [
