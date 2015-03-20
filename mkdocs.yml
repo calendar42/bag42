@@ -1,5 +1,5 @@
 site_name: Bag42 geocoder
-#site_favicon: favicon.ico
+site_favicon: favicon.ico
 #pages:
 #- ['README.md', 'Introduction']
 #- ['examples/autocomplete.md', 'Examples', 'Autocomplete']
