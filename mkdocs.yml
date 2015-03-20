@@ -2,6 +2,6 @@ site_name: Bag42 geocoder
 site_favicon: favicon.ico
 pages:
 - ['README.md', 'Introduction']
-- ['docs/examples/autocomplete.md', 'Examples', 'Autocomplete']
-- ['docs/examples/geocoding.md', 'Examples', 'Geocoding']
-- ['docs/examples/geocoding.md', 'Examples', 'Results']
+- ['examples/autocomplete.md', 'Examples', 'Autocomplete']
+- ['examples/geocoding.md', 'Examples', 'Geocoding']
+- ['examples/geocoding.md', 'Examples', 'Results']
